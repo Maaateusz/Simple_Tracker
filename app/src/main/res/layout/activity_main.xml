@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/locationTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Static" />
+
+    <TextView
+        android:id="@+id/locationTextView2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Dynamic"
+        android:layout_below="@id/locationTextView"/>
+
+    <TextView
+        android:id="@+id/locationTextView3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:layout_below="@id/locationTextView2"/>
+
+    <Button
+        android:id="@+id/getLocationBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Get Last Known Location"
+        android:layout_below="@id/locationTextView3"
+        android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:id="@+id/getLocationBtn2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start New Route"
+        android:layout_below="@id/getLocationBtn"
+        android:layout_centerHorizontal="true"/>
+
+</RelativeLayout>
