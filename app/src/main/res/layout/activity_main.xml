@@ -12,12 +12,20 @@
         android:layout_height="wrap_content"
         android:text="Static" />
 
+    <Button
+        android:id="@+id/getLocationBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Get Last Known Location"
+        android:layout_below="@id/locationTextView"
+        android:layout_centerHorizontal="true"/>
+
     <TextView
         android:id="@+id/locationTextView2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Dynamic"
-        android:layout_below="@id/locationTextView"/>
+        android:layout_below="@id/getLocationBtn"/>
 
     <TextView
         android:id="@+id/locationTextView3"
@@ -27,19 +35,11 @@
         android:layout_below="@id/locationTextView2"/>
 
     <Button
-        android:id="@+id/getLocationBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Get Last Known Location"
-        android:layout_below="@id/locationTextView3"
-        android:layout_centerHorizontal="true"/>
-
-    <Button
         android:id="@+id/getLocationBtn2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Start New Route"
-        android:layout_below="@id/getLocationBtn"
+        android:layout_below="@id/locationTextView3"
         android:layout_centerHorizontal="true"/>
 
 </RelativeLayout>

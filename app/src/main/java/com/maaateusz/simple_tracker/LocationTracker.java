@@ -24,13 +24,16 @@ class LocationTracker implements LocationListener {
     //private float[] result = new float[3];
     private float[] result = new float[1];
     private List<Location> twoLocations;
-    private float distance;
+    private float distance, speedSum, avgSpeed;
+    private int counter;
     private boolean isRouteStart = false;
 
     public LocationTracker( Context context){
-        //prevLocation = getLocation();
         twoLocations = new ArrayList<>();
         distance = 0;
+        speedSum = 0;
+        avgSpeed = 0;
+        counter = 0;
         locationTextView2 = ((Activity)context).findViewById(R.id.locationTextView2);
         locationTextView3 = ((Activity)context).findViewById(R.id.locationTextView3);
         this.context = context;
@@ -53,15 +56,16 @@ class LocationTracker implements LocationListener {
         return null;
     }
 
-    //latitude | longitude
+    // latitude | longitude
     @Override
     public void onLocationChanged(Location location) {
-        locationTextView2.setText("Dynamic: \n" + location.getLatitude() + "\n" + location.getLongitude());
+        locationTextView2.setText("Actual Location: \n<" + location.getLatitude() + " | " + location.getLongitude() +">");
         if(isRouteStart) {
             if (twoLocations.size() < 1) {
                 twoLocations.add(location);
             } else if (twoLocations.size() == 1) {
                 twoLocations.add(location);
+                calculatePosition(location);
             } else {
                 twoLocations.set(0, twoLocations.get(1));
                 twoLocations.set(1, location);
@@ -72,15 +76,17 @@ class LocationTracker implements LocationListener {
 
     public void isRouteStart(boolean isRouteStart){
         this.isRouteStart = isRouteStart;
-        //locationTextView3.setText("");
     }
 
     public void calculatePosition(Location location){
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();
         float speed = location.getSpeed();
+        counter++;
+        speedSum += speed;
+        avgSpeed = speedSum / counter;
         Location.distanceBetween((twoLocations.get(0)).getLatitude(), (twoLocations.get(0)).getLongitude(), latitude, longitude, result);
-        locationTextView3.setText("Moved: " + result[0] +"m | Distance: "+ distance +"m | Speed: "+ speed  +"m/s");
+        locationTextView3.setText("Distance: " + distance +"m\n|Speed: "+ speed +"m/s\n|Avg. Speed: "+ avgSpeed +"m/s\n|Moved: "+ result[0] +"m");
         distance += result[0];
     }
 
