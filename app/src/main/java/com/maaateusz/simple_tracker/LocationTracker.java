@@ -86,7 +86,7 @@ class LocationTracker implements LocationListener {
         speedSum += speed;
         avgSpeed = speedSum / counter;
         Location.distanceBetween((twoLocations.get(0)).getLatitude(), (twoLocations.get(0)).getLongitude(), latitude, longitude, result);
-        locationTextView3.setText("Distance: " + distance +"m\n|Speed: "+ speed +"m/s\n|Avg. Speed: "+ avgSpeed +"m/s\n|Moved: "+ result[0] +"m");
+        locationTextView3.setText("Distance: " + distance +"m\nSpeed: "+ speed +"m/s\nAvg. Speed: "+ avgSpeed +"m/s\nMoved: "+ result[0] +"m");
         distance += result[0];
     }
 
