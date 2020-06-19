@@ -3,11 +3,13 @@ package com.maaateusz.simple_tracker;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +29,7 @@ class LocationTracker implements LocationListener {
     private float distance, speedSum, avgSpeed;
     private int counter;
     private boolean isRouteStart = false;
+    private String other;
 
     public LocationTracker( Context context){
         twoLocations = new ArrayList<>();
@@ -34,8 +37,8 @@ class LocationTracker implements LocationListener {
         speedSum = 0;
         avgSpeed = 0;
         counter = 0;
-        locationTextView2 = ((Activity)context).findViewById(R.id.locationTextView2);
-        locationTextView3 = ((Activity)context).findViewById(R.id.locationTextView3);
+        //locationTextView2 = ((Activity)context).findViewById(R.id.locationTextView2);
+        //locationTextView3 = ((Activity)context).findViewById(R.id.locationTextView3);
         this.context = context;
     }
 
@@ -59,7 +62,7 @@ class LocationTracker implements LocationListener {
     // latitude | longitude
     @Override
     public void onLocationChanged(Location location) {
-        locationTextView2.setText("Actual Location: \n<" + location.getLatitude() + " | " + location.getLongitude() +">");
+        //locationTextView2.setText("Actual Location: \n<" + location.getLatitude() + " | " + location.getLongitude() +">");
         if(isRouteStart) {
             if (twoLocations.size() < 1) {
                 twoLocations.add(location);
@@ -72,6 +75,12 @@ class LocationTracker implements LocationListener {
                 calculatePosition(location);
             }
         }
+
+        //Toast.makeText(context,"Send Broadcast",Toast.LENGTH_LONG).show();
+        Intent i = new Intent("location_update");
+        i.putExtra("LOCATION", location);
+        i.putExtra("OTHER", other);
+        context.sendBroadcast(i);
     }
 
     public void isRouteStart(boolean isRouteStart){
@@ -86,7 +95,8 @@ class LocationTracker implements LocationListener {
         speedSum += speed;
         avgSpeed = speedSum / counter;
         Location.distanceBetween((twoLocations.get(0)).getLatitude(), (twoLocations.get(0)).getLongitude(), latitude, longitude, result);
-        locationTextView3.setText("Distance: " + distance +"m\nSpeed: "+ speed +"m/s\nAvg. Speed: "+ avgSpeed +"m/s\nMoved: "+ result[0] +"m");
+        //locationTextView3.setText("Distance: " + distance +"m\nSpeed: "+ speed +"m/s\nAvg. Speed: "+ avgSpeed +"m/s\nMoved: "+ result[0] +"m");
+        other = "Distance: " + distance +"m\nSpeed: "+ speed +"m/s\nAvg. Speed: "+ avgSpeed +"m/s\nMoved: "+ result[0] +"m";
         distance += result[0];
     }
 
@@ -103,5 +113,8 @@ class LocationTracker implements LocationListener {
     @Override
     public void onProviderDisabled(String provider) {
         Toast.makeText(context,"GPS is disabled",Toast.LENGTH_LONG).show();
+        Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(i);
     }
 }
