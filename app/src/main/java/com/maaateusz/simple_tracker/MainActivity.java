@@ -3,9 +3,13 @@ package com.maaateusz.simple_tracker;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +17,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.view.View;
@@ -30,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
     //private LocationManager locationManager;
     //private LocationTracker locationTracker;
     //private boolean isPermissionGranted = false;
-    private boolean isRouteStart = false;
+    public static boolean isRouteStart = false;
     public BroadcastReceiver broadcastReceiver;
     private Location location;
     PowerManager.WakeLock wakeLock;
@@ -69,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
                     isRouteStart = true;
                     //locationTracker.isRouteStart(true);
                     getLocationBtn2.setText("End Route");
+                    //stopService(new Intent(MainActivity.this, TrackService.class));
                     startService(new Intent(MainActivity.this, TrackService.class));
                 } else {
                     isRouteStart = false;
