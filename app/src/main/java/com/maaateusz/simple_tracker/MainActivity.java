@@ -20,6 +20,7 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -32,22 +33,15 @@ public class MainActivity extends AppCompatActivity {
     private TextView locationTextView3;
     private Button getLocationBtn;
     private Button getLocationBtn2;
-    //private LocationManager locationManager;
-    //private LocationTracker locationTracker;
-    //private boolean isPermissionGranted = false;
     public static boolean isRouteStart = false;
     public BroadcastReceiver broadcastReceiver;
     private Location location;
-    PowerManager.WakeLock wakeLock;
+    private String TAG = MainActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        PowerManager mgr = (PowerManager)getApplicationContext().getSystemService(Context.POWER_SERVICE);
-        wakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "myapp:mywakelocktag");
-        wakeLock.acquire();
 
         locationTextView = (TextView) findViewById(R.id.locationTextView);
         locationTextView2 = (TextView) findViewById(R.id.locationTextView2);
@@ -69,19 +63,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(!isRouteStart){
-                    //locationManager.removeUpdates(locationTracker);
-                    //initializeLocationManager();
                     isRouteStart = true;
-                    //locationTracker.isRouteStart(true);
                     getLocationBtn2.setText("End Route");
-                    //stopService(new Intent(MainActivity.this, TrackService.class));
-                    startService(new Intent(MainActivity.this, TrackService.class));
+                    Log.d(TAG, "Start Service");
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        MainActivity.this.startForegroundService(new Intent(MainActivity.this,  TrackService.class));
+                    } else {
+                        MainActivity.this.startService(new Intent(MainActivity.this,  TrackService.class));
+                    }
                 } else {
                     isRouteStart = false;
-                    //locationManager.removeUpdates(locationTracker);
-                    //initializeLocationManager();
                     getLocationBtn2.setText("Start New Route");
-                    stopService(new Intent(MainActivity.this, TrackService.class));
+                    Log.d(TAG, "Stop Service");
+                    MainActivity.this.stopService(new Intent(MainActivity.this,  TrackService.class));
                 }
             }
         });
@@ -102,13 +96,6 @@ public class MainActivity extends AppCompatActivity {
                     "Raw: <" + latitude + " | " + longitude +">");
         }
     }
-
-/*    @SuppressLint("MissingPermission")
-    public void initializeLocationManager(){
-        locationTracker = new LocationTracker(this);
-        //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, locationTracker);
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, locationTracker);
-    }*/
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -146,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
                     //Toast.makeText(MainActivity.this, ""+ intent.getExtras().get("coordinates"), Toast.LENGTH_SHORT).show();
                     location = (Location) intent.getExtras().get("LOCATION");
                     updateUI(intent.getStringExtra("OTHER"));
+                    //Log.d(TAG, " "+ location.getLatitude());
                 }
             };
         }

@@ -10,6 +10,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +31,7 @@ class LocationTracker implements LocationListener {
     private int counter;
     private boolean isRouteStart = false;
     private String other;
+    private Location loc;
 
     public LocationTracker( Context context){
         twoLocations = new ArrayList<>();
@@ -43,25 +45,27 @@ class LocationTracker implements LocationListener {
     }
 
     public Location getLocation(){
-        if(ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            Toast.makeText(context,"Permission not granted!", Toast.LENGTH_SHORT).show();
-            return null;
-        }
-        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        boolean isGPSenabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        if(isGPSenabled){
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
-            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            return location;
-        } else{
-            Toast.makeText(context,"Turn ON GPS!", Toast.LENGTH_SHORT).show();
-        }
-        return null;
+        return loc;
+//        if(ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+//            Toast.makeText(context,"Permission not granted!", Toast.LENGTH_SHORT).show();
+//            return null;
+//        }
+//        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+//        boolean isGPSenabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+//        if(isGPSenabled){
+//            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1, this);
+//            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//            return location;
+//        } else{
+//            Toast.makeText(context,"Turn ON GPS!", Toast.LENGTH_SHORT).show();
+//        }
+//        return null;
     }
 
     // latitude | longitude
     @Override
     public void onLocationChanged(Location location) {
+        loc = location;
         //locationTextView2.setText("Actual Location: \n<" + location.getLatitude() + " | " + location.getLongitude() +">");
         if(isRouteStart) {
             if (twoLocations.size() < 1) {
@@ -81,6 +85,7 @@ class LocationTracker implements LocationListener {
         i.putExtra("LOCATION", location);
         i.putExtra("OTHER", other);
         context.sendBroadcast(i);
+        Log.d("LOCATION", ""+ location.getLatitude());
     }
 
     public void isRouteStart(boolean isRouteStart){
