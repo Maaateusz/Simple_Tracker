@@ -3,23 +3,20 @@ package com.maaateusz.simple_tracker;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PowerManager;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -31,12 +28,15 @@ public class MainActivity extends AppCompatActivity {
     private TextView locationTextView;
     private TextView locationTextView2;
     private TextView locationTextView3;
+    private TextView locationTextView4;
     private Button getLocationBtn;
     private Button getLocationBtn2;
-    public static boolean isRouteStart = false;
     public BroadcastReceiver broadcastReceiver;
     private Location location;
     private String TAG = MainActivity.class.getSimpleName();
+    private Handler customHandler = new Handler();
+    private long startTime = 0l, timeInMilis = 0l, timeInMilisBuff = 0l, milliseconds = 0l, getTimeMilis = 0l;
+    private boolean isTimerRunning;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,12 +46,41 @@ public class MainActivity extends AppCompatActivity {
         locationTextView = (TextView) findViewById(R.id.locationTextView);
         locationTextView2 = (TextView) findViewById(R.id.locationTextView2);
         locationTextView3 = (TextView) findViewById(R.id.locationTextView3);
+        locationTextView4 = (TextView) findViewById(R.id.locationTextView4);
         getLocationBtn = (Button) findViewById(R.id.getLocationBtn);
         getLocationBtn2 = (Button) findViewById(R.id.getLocationBtn2);
-        //locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
 
+        buttonsListeners();
+    }
+
+    @SuppressLint("MissingPermission")
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(broadcastReceiver == null){
+            broadcastReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    location = (Location) intent.getExtras().get("LOCATION");
+                    updateUI(intent.getStringExtra("OTHER"));
+                    Log.d(TAG, " "+ location.getLatitude());
+                }
+            };
+        }
+        registerReceiver(broadcastReceiver, new IntentFilter("location_update"));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+            if(broadcastReceiver != null) {
+                unregisterReceiver(broadcastReceiver);
+            }
+    }
+
+    private void buttonsListeners() {
         getLocationBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -62,8 +91,7 @@ public class MainActivity extends AppCompatActivity {
         getLocationBtn2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!isRouteStart){
-                    isRouteStart = true;
+                if(!getRoadStatus()){
                     getLocationBtn2.setText("End Route");
                     Log.d(TAG, "Start Service");
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -71,20 +99,43 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         MainActivity.this.startService(new Intent(MainActivity.this,  TrackService.class));
                     }
+                    setRoadStatus(true);
                 } else {
-                    isRouteStart = false;
                     getLocationBtn2.setText("Start New Route");
-                    Log.d(TAG, "Stop Service");
                     MainActivity.this.stopService(new Intent(MainActivity.this,  TrackService.class));
+                    Log.d(TAG, "Stop Service");
+                    setRoadStatus(false);
                 }
+
+                checkTimerStatus();
             }
         });
 
     }
 
+    public void updateUI(String string){
+        locationTextView2.setText("Actual Location: \n<" + location.getLatitude() + " | " + location.getLongitude() +">");
+        locationTextView3.setText(string);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case 1: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "Permission granted!", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Permission denied!", Toast.LENGTH_SHORT).show();
+                    finish();
+                    System.exit(0);
+                }
+                return;
+            }
+        }
+    }
+
     public void setLastKnownLocation(){
-        //@SuppressLint("MissingPermission")
-        //Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         if (location != null) {
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
@@ -97,62 +148,62 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case 1: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    //isPermissionGranted = true;
-                    //initializeLocationManager();
-                    Toast.makeText(this, "Permission granted!", Toast.LENGTH_SHORT).show();
-                } else {
-                    finish();
-                    System.exit(0);
-                    Toast.makeText(this, "Permission denied!", Toast.LENGTH_SHORT).show();
-                }
-                return;
-            }
+    public boolean getRoadStatus(){
+        SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
+        return sharedPreferences.getBoolean("isRoadOn", false);
+    }
+
+    public void setRoadStatus(boolean status){
+        SharedPreferences sharedPreferences =  this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("isRoadOn", status);
+        editor.commit();
+    }
+
+    Runnable updateTimerThread = new Runnable() {
+        @Override
+        public void run() {
+            timeInMilis = SystemClock.uptimeMillis() - startTime;
+            milliseconds = timeInMilisBuff + timeInMilis;
+            int secs = (int) (milliseconds / 1000);
+            int mins = secs / 60;
+            int hours = (int) (mins /60);
+            secs %= 60;
+            mins %= 60;
+            int milis = (int) (milliseconds % 1000);
+            locationTextView4.setText(String.format("" + String.format("%2d", hours) + ":" + String.format("%2d", mins) + ":" + String.format("%2d", secs) + ":" + String.format("%3d", milis)));
+            customHandler.postDelayed(this, 100);
+        }
+    };
+
+    public void checkTimerStatus(){
+        if(!isTimerRunning){
+            startTime();
+        } else {
+            stopTime();
         }
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        //locationManager.removeUpdates(locationTracker);
-    }
-
-    @SuppressLint("MissingPermission")
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if(broadcastReceiver == null){
-            broadcastReceiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    //Toast.makeText(MainActivity.this, ""+ intent.getExtras().get("coordinates"), Toast.LENGTH_SHORT).show();
-                    location = (Location) intent.getExtras().get("LOCATION");
-                    updateUI(intent.getStringExtra("OTHER"));
-                    //Log.d(TAG, " "+ location.getLatitude());
-                }
-            };
+    public void startTime(){
+        if(!isTimerRunning) {
+            startTime = 0l;
+            timeInMilis = 0l;
+            timeInMilisBuff = 0l;
+            milliseconds = 0l;
+            getTimeMilis = 0l;
+            locationTextView4.setText(" 0: 0: 0:000");
+            startTime = SystemClock.uptimeMillis();
+            customHandler.postDelayed(updateTimerThread, 500);
+            isTimerRunning = true;
         }
-        registerReceiver(broadcastReceiver, new IntentFilter("location_update"));
-        //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,MINIMUM_TIME_BETWEEN_UPDATES,MINIMUM_DISTANCE_CHANGE_FOR_UPDATES, myLocationListener);
-        //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, locationTracker);
     }
 
-    public void updateUI(String string){
-        locationTextView2.setText("Actual Location: \n<" + location.getLatitude() + " | " + location.getLongitude() +">");
-        locationTextView3.setText(string);
+    public void stopTime(){
+        if(isTimerRunning) {
+            timeInMilisBuff += timeInMilis;
+            customHandler.removeCallbacks(updateTimerThread);
+            isTimerRunning = false;
+        }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-            if(broadcastReceiver != null) {
-                unregisterReceiver(broadcastReceiver);
-            }
-
-    }
 }

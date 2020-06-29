@@ -8,12 +8,16 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.nfc.Tag;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -23,6 +27,7 @@ import android.os.Process;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
@@ -34,6 +39,8 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import java.util.List;
 import java.util.Locale;
@@ -41,15 +48,13 @@ import java.util.Locale;
 public class TrackService extends Service {
 
     private String TAG = TrackService.class.getSimpleName();
-    private LocationManager locationManager;
-    private LocationTracker locationTracker;
-    NotificationManagerCompat notificationManager;
-    private Handler handler = new Handler();
+    private NotificationManager notificationManager;
     private static  final int ONGOING_NOTIFICATION_ID = 2137;
     private String channelId;
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationRequest locationRequest;
-    private LocationCallback locationCallback;
+    private Location location;
+    private LocationTracker locationTracker;
 
     public TrackService(){
 
@@ -66,48 +71,25 @@ public class TrackService extends Service {
         super.onCreate();
         Log.d(TAG, "onCreate");
 
-        //locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        //initializeLocationManager();
-        //locationTracker.isRouteStart(true);
-
-        MainActivity.isRouteStart = true;
+        locationTracker = new LocationTracker(this);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setFastestInterval(1000);
         locationRequest.setInterval(1000);
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null) {
-                    return;
-                }
-                for (Location location : locationResult.getLocations()) {
-                    if (location != null) {
-                        String wayLatitude = ""+ location.getLatitude();
-                        Log.d(TAG, " "+ wayLatitude);
-                    }
-                }
-            }
-        };
-        setNotification();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
-
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
-                //Location Permission already granted
-                mFusedLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, Looper.myLooper());
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                mFusedLocationClient.requestLocationUpdates(locationRequest, LocationCallback, Looper.myLooper());
+                setNotification();
+                Log.d(TAG, "Location Permission Granted");
             }
         }
-
-        handler.postDelayed(runnable, 1000);
-        //return super.onStartCommand(intent, flags, startId);
         //return START_NOT_STICKY;
         return START_STICKY;
     }
@@ -115,54 +97,27 @@ public class TrackService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        handler.removeCallbacks(runnable);
         stopForeground(true);
-        Log.d(TAG, "onDestroy");
-
         if (mFusedLocationClient != null) {
-            mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+            mFusedLocationClient.removeLocationUpdates(LocationCallback);
         }
-
-        //notificationManager.cancelAll();
-//        if(locationManager != null){
-//            locationManager.removeUpdates(locationTracker);
-//        }
+        Log.d(TAG, "onDestroy");
     }
 
-    LocationCallback mLocationCallback = new LocationCallback() {
+    LocationCallback LocationCallback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
+            super.onLocationResult(locationResult);
+            if (locationResult == null) return;
             //List<Location> locationList = locationResult.getLocations();
-            Log.d(TAG, " "+ locationResult.getLastLocation().getLatitude() +" "+ locationResult.getLastLocation().getLongitude());
 
-//            if (locationList.size() > 0) {
-//                Location location = locationList.get(locationList.size() - 1);
-//            }
+            location = locationResult.getLastLocation();
+            Log.d(TAG, ""+ locationResult.getLastLocation().getLatitude() +" "+ locationResult.getLastLocation().getLongitude());
+
+            locationTracker.calculatePosition(location);
+            locationTracker.sendBroadcastData();
         }
     };
-
-    final Runnable runnable = new Runnable() {
-        @SuppressLint("MissingPermission")
-        @Override
-        public void run() {
-            // TODO
-
-
-            //Log.d(TAG, " "+ mFusedLocationClient.getLastLocation().getResult().getLatitude());
-            //Location l = locationTracker.getLocation();
-            //Log.d(TAG, " "+ l.getLatitude());
-            //Log.d(TAG, " "+ "RUNNABLE: ");
-            //handler.postDelayed(this, 1000);
-        }
-    };
-
-
-    @SuppressLint("MissingPermission")
-    public void initializeLocationManager(){
-        locationTracker = new LocationTracker(getApplicationContext());
-        //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, locationTracker);
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, locationTracker);
-    }
 
     public void setNotification() {
         Intent notificationIntent = new Intent(this, MainActivity.class);
