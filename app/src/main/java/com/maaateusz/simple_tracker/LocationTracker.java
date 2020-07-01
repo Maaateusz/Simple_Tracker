@@ -26,7 +26,7 @@ class LocationTracker {
         speedSum = 0;
         avgSpeed = 0;
         counter = 0;
-        other = "";
+        other = "Distance: \nSpeed: \nAvg. Speed: \nMoved: ";
         this.context = context;
     }
 
@@ -65,7 +65,7 @@ class LocationTracker {
         float speed2 = speed * new Float(3.6);
         Location.distanceBetween((twoLocations.get(0)).getLatitude(), (twoLocations.get(0)).getLongitude(), latitude, longitude, result);
 
-        other = "Distance: " + distance +"m\nSpeed: "+ speed +"m/s | "+ speed2 +"km/h\nAvg. Speed: "+ avgSpeed +"m/s | "+ avgSpeed2 +"km/h\nMoved: "+ result[0] +"m";
+        other = "Distance: " + distance +"m | "+ (distance/1000) +"km\nSpeed: "+ speed +"m/s | "+ speed2 +"km/h\nAvg. Speed: "+ avgSpeed +"m/s | "+ avgSpeed2 +"km/h\nMoved: "+ result[0] +"m";
         distance += result[0];
     }
 

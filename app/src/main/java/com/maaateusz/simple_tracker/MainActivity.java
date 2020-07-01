@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
     private String TAG = MainActivity.class.getSimpleName();
     private Handler customHandler = new Handler();
     private long startTime = 0l, timeInMilis = 0l, timeInMilisBuff = 0l, milliseconds = 0l, getTimeMilis = 0l;
-    private boolean isTimerRunning;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,17 +58,35 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume: "+ getRoadStatus());
+
         if(broadcastReceiver == null){
             broadcastReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     location = (Location) intent.getExtras().get("LOCATION");
                     updateUI(intent.getStringExtra("OTHER"));
-                    Log.d(TAG, " "+ location.getLatitude());
+                    Log.d(TAG, ""+ location.getLatitude() +" "+ location.getLongitude());
                 }
             };
         }
         registerReceiver(broadcastReceiver, new IntentFilter("location_update"));
+
+        if(getRoadStatus()){
+            getLocationBtn2.setText("End Route");
+            startTime();
+            SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
+            startTime = sharedPreferences.getLong("milliseconds", 0);
+            Log.d(TAG, "getMilis: "+ startTime);
+
+        } else {
+            getLocationBtn2.setText("Start New Route");
+        }
+
+        locationTextView.setText("Last Known Location: <Latitude | Longitude>\nDegrees: < | >\nSeconds: < | >\nMinutes: < | >\nRaw: < | >");
+        locationTextView2.setText("Actual Location:\n< | >");
+        locationTextView3.setText("Distance: \nSpeed: \nAvg. Speed: \nMoved: ");
+        locationTextView4.setText(" 0: 0: 0:000");
     }
 
     @Override
@@ -78,6 +95,13 @@ public class MainActivity extends AppCompatActivity {
             if(broadcastReceiver != null) {
                 unregisterReceiver(broadcastReceiver);
             }
+        customHandler.removeCallbacks(updateTimerThread);
+
+        SharedPreferences sharedPreferences =  this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putLong("milliseconds", startTime);
+        editor.commit();
+        Log.d(TAG, "setMilis: "+ startTime);
     }
 
     private void buttonsListeners() {
@@ -91,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
         getLocationBtn2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d(TAG, "Status: "+ getRoadStatus());
                 if(!getRoadStatus()){
                     getLocationBtn2.setText("End Route");
                     Log.d(TAG, "Start Service");
@@ -99,15 +124,15 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         MainActivity.this.startService(new Intent(MainActivity.this,  TrackService.class));
                     }
+                    startTime();
                     setRoadStatus(true);
                 } else {
                     getLocationBtn2.setText("Start New Route");
                     MainActivity.this.stopService(new Intent(MainActivity.this,  TrackService.class));
                     Log.d(TAG, "Stop Service");
+                    stopTime();
                     setRoadStatus(false);
                 }
-
-                checkTimerStatus();
             }
         });
 
@@ -176,16 +201,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    public void checkTimerStatus(){
-        if(!isTimerRunning){
-            startTime();
-        } else {
-            stopTime();
-        }
-    }
-
     public void startTime(){
-        if(!isTimerRunning) {
             startTime = 0l;
             timeInMilis = 0l;
             timeInMilisBuff = 0l;
@@ -194,16 +210,11 @@ public class MainActivity extends AppCompatActivity {
             locationTextView4.setText(" 0: 0: 0:000");
             startTime = SystemClock.uptimeMillis();
             customHandler.postDelayed(updateTimerThread, 500);
-            isTimerRunning = true;
         }
-    }
 
     public void stopTime(){
-        if(isTimerRunning) {
             timeInMilisBuff += timeInMilis;
             customHandler.removeCallbacks(updateTimerThread);
-            isTimerRunning = false;
         }
-    }
 
 }
