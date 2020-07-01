@@ -1,37 +1,21 @@
 package com.maaateusz.simple_tracker;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationManager;
-import android.nfc.Tag;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.Message;
-import android.os.Process;
-import android.util.Log;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -39,21 +23,12 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-
-import java.util.List;
-import java.util.Locale;
 
 public class TrackService extends Service {
 
-    private String TAG = TrackService.class.getSimpleName();
-    private NotificationManager notificationManager;
     private static  final int ONGOING_NOTIFICATION_ID = 2137;
-    private String channelId;
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationRequest locationRequest;
-    private Location location;
     private LocationTracker locationTracker;
 
     public TrackService(){
@@ -69,7 +44,6 @@ public class TrackService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(TAG, "onCreate");
 
         locationTracker = new LocationTracker(this);
 
@@ -82,13 +56,9 @@ public class TrackService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand");
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                mFusedLocationClient.requestLocationUpdates(locationRequest, LocationCallback, Looper.myLooper());
-                setNotification();
-                Log.d(TAG, "Location Permission Granted");
-            }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            mFusedLocationClient.requestLocationUpdates(locationRequest, LocationCallback, Looper.myLooper());
+            setNotification();
         }
         //return START_NOT_STICKY;
         return START_STICKY;
@@ -101,18 +71,16 @@ public class TrackService extends Service {
         if (mFusedLocationClient != null) {
             mFusedLocationClient.removeLocationUpdates(LocationCallback);
         }
-        Log.d(TAG, "onDestroy");
     }
 
-    LocationCallback LocationCallback = new LocationCallback() {
+    final LocationCallback LocationCallback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
             super.onLocationResult(locationResult);
             if (locationResult == null) return;
             //List<Location> locationList = locationResult.getLocations();
 
-            location = locationResult.getLastLocation();
-            Log.d(TAG, ""+ locationResult.getLastLocation().getLatitude() +" "+ locationResult.getLastLocation().getLongitude());
+            Location location = locationResult.getLastLocation();
 
             locationTracker.calculatePosition(location);
             locationTracker.sendBroadcastData();
@@ -125,7 +93,7 @@ public class TrackService extends Service {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        channelId = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? createNotificationChannel(notificationManager) : "";
+        String channelId = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? createNotificationChannel(notificationManager) : "";
         //Notification notification = new Notification.Builder(this, channelId) //CHANNEL_DEFAULT_IMPORTANCE // @RequiresApi(api = Build.VERSION_CODES.O)
         Notification notification = new NotificationCompat.Builder(this, channelId)
                 .setContentTitle("Content Title")

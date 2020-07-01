@@ -3,18 +3,17 @@ package com.maaateusz.simple_tracker;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
 
 class LocationTracker {
 
-    private Context context;
+    private final Context context;
     //The computed distance is stored in results[0]. If results has length 2 or greater, the initial bearing is stored in results[1]. If results has length 3 or greater, the final bearing is stored in results[2].
     //private float[] result = new float[3];
-    private float[] result = new float[1];
-    private List<Location> twoLocations;
+    private final float[] result = new float[1];
+    private final List<Location> twoLocations;
     private float distance, speedSum, avgSpeed;
     private int counter;
     private String other;
@@ -51,7 +50,6 @@ class LocationTracker {
         i.putExtra("LOCATION", actualLocation);
         i.putExtra("OTHER", other);
         context.sendBroadcast(i);
-        //Log.d("LOCATION", "" + actualLocation.getLatitude());
     }
 
     public void calculateOthers(){
@@ -61,8 +59,8 @@ class LocationTracker {
         counter++;
         speedSum += speed;
         avgSpeed = speedSum / counter;
-        float avgSpeed2 = avgSpeed * new Float(3.6);
-        float speed2 = speed * new Float(3.6);
+        float avgSpeed2 = avgSpeed * 3.6f;
+        float speed2 = speed * 3.6f;
         Location.distanceBetween((twoLocations.get(0)).getLatitude(), (twoLocations.get(0)).getLongitude(), latitude, longitude, result);
 
         other = "Distance: " + distance +"m | "+ (distance/1000) +"km\nSpeed: "+ speed +"m/s | "+ speed2 +"km/h\nAvg. Speed: "+ avgSpeed +"m/s | "+ avgSpeed2 +"km/h\nMoved: "+ result[0] +"m";

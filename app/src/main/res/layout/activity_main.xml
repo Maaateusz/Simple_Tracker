@@ -1,52 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
     <TextView
-        android:id="@+id/locationTextView"
+        android:id="@+id/staticLocationTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Static" />
 
     <Button
-        android:id="@+id/getLocationBtn"
+        android:id="@+id/getLastLocationBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Get Last Known Location"
-        android:layout_below="@id/locationTextView"
+        android:layout_below="@id/staticLocationTextView"
         android:layout_centerHorizontal="true"/>
 
     <TextView
-        android:id="@+id/locationTextView2"
+        android:id="@+id/dynamicLocationTextView2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Dynamic"
-        android:layout_below="@id/getLocationBtn"/>
+        android:layout_below="@id/getLastLocationBtn"/>
 
     <TextView
-        android:id="@+id/locationTextView3"
+        android:id="@+id/otherLocationTextView3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:layout_below="@id/locationTextView2"/>
+        android:layout_below="@id/dynamicLocationTextView2"/>
 
     <TextView
-        android:id="@+id/locationTextView4"
+        android:id="@+id/timerTextView4"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:layout_below="@id/locationTextView3"/>
+        android:layout_below="@id/otherLocationTextView3"/>
 
     <Button
         android:id="@+id/getLocationBtn2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Start New Route"
-        android:layout_below="@id/locationTextView4"
+        android:layout_below="@id/timerTextView4"
         android:layout_centerHorizontal="true"/>
 
 </RelativeLayout>
