@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -13,10 +12,12 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -55,10 +56,12 @@ public class MainActivity extends AppCompatActivity {
 
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
 
+        if(isLocationEnabled(this)) Toast.makeText(this, "Location On", Toast.LENGTH_SHORT).show();
+        else Toast.makeText(this, "Location Off", Toast.LENGTH_SHORT).show();
+
         buttonsListeners();
     }
 
-    @SuppressLint("MissingPermission")
     @Override
     protected void onResume() {
         super.onResume();
@@ -79,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
             startTime();
             SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
             startTime = sharedPreferences.getLong("startTime", 0);
-
         } else {
             getLocationBtn2.setText("Start New Route");
         }
@@ -91,17 +93,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        SharedPreferences sharedPreferences =  this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putLong("startTime", startTime);
+        editor.apply();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
             if(broadcastReceiver != null) {
                 unregisterReceiver(broadcastReceiver);
             }
         customHandler.removeCallbacks(updateTimerThread);
-
-        SharedPreferences sharedPreferences =  this.getPreferences(Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putLong("startTime", startTime);
-        editor.apply();
     }
 
     private void buttonsListeners() {
@@ -167,6 +173,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public static Boolean isLocationEnabled(Context context)
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            // This is new method provided in API 28
+            LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            return lm.isLocationEnabled();
+        } else {
+            // This is Deprecated in API 28
+            int mode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE,
+                    Settings.Secure.LOCATION_MODE_OFF);
+            return  (mode != Settings.Secure.LOCATION_MODE_OFF);
+        }
+    }
+
+    
     public boolean getRoadStatus(){
         SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
         return sharedPreferences.getBoolean("isRoadOn", false);
@@ -201,7 +222,12 @@ public class MainActivity extends AppCompatActivity {
             l = 0L;
             milliseconds = 0L;
             timerTextView4.setText(" 0: 0: 0:000");
-            startTime = SystemClock.uptimeMillis();
+            if(getRoadStatus()) {
+                SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE);
+                startTime = sharedPreferences.getLong("startTime", 0);
+            } else {
+                startTime = SystemClock.uptimeMillis();
+            }
             customHandler.postDelayed(updateTimerThread, 500);
         }
 

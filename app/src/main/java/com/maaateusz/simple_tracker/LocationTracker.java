@@ -63,7 +63,13 @@ class LocationTracker {
         float speed2 = speed * 3.6f;
         Location.distanceBetween((twoLocations.get(0)).getLatitude(), (twoLocations.get(0)).getLongitude(), latitude, longitude, result);
 
-        other = "Distance: " + distance +"m | "+ (distance/1000) +"km\nSpeed: "+ speed +"m/s | "+ speed2 +"km/h\nAvg. Speed: "+ avgSpeed +"m/s | "+ avgSpeed2 +"km/h\nMoved: "+ result[0] +"m";
+        other = "Distance: " + String.format("%.3f", distance) +"m | "+
+                String.format("%.3f", (distance/1000)) +"km\nSpeed: "+
+                String.format("%.3f", speed) +"m/s | "+
+                String.format("%.3f", speed2) +"km/h\nAvg. Speed: "+
+                String.format("%.3f", avgSpeed) +"m/s | "+
+                String.format("%.3f", avgSpeed2) +"km/h\nMoved: "+
+                String.format("%.3f", result[0]) +"m";
         distance += result[0];
     }
 
