@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
@@ -18,6 +19,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -60,6 +64,12 @@ public class MainActivity extends AppCompatActivity {
         else Toast.makeText(this, "Location Off", Toast.LENGTH_SHORT).show();
 
         buttonsListeners();
+
+        staticLocationTextView.setText("Last Known Location: <Latitude | Longitude>\nDegrees: < | >\nSeconds: < | >\nMinutes: < | >\nRaw: < | >");
+        dynamicLocationTextView2.setText("Actual Location:\n< | >");
+        otherLocationTextView3.setText("Distance: \nSpeed: \nAvg. Speed: \nMoved: ");
+        timerTextView4.setTextColor(Color.RED);
+        timerTextView4.setText(" 0: 0: 0:000");
     }
 
     @Override
@@ -85,11 +95,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             getLocationBtn2.setText("Start New Route");
         }
-
-        staticLocationTextView.setText("Last Known Location: <Latitude | Longitude>\nDegrees: < | >\nSeconds: < | >\nMinutes: < | >\nRaw: < | >");
-        dynamicLocationTextView2.setText("Actual Location:\n< | >");
-        otherLocationTextView3.setText("Distance: \nSpeed: \nAvg. Speed: \nMoved: ");
-        timerTextView4.setText(" 0: 0: 0:000");
     }
 
     @Override
@@ -138,11 +143,33 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
     }
 
     public void updateUI(String string){
         dynamicLocationTextView2.setText("Actual Location: \n<" + location.getLatitude() + " | " + location.getLongitude() +">");
+//        SpannableStringBuilder spannable = new SpannableStringBuilder(string);
+//        spannable.setSpan(
+//                new ForegroundColorSpan(Color.RED),
+//                0, // start
+//                9, // end
+//                Spannable.SPAN_EXCLUSIVE_INCLUSIVE
+//        );
+//        try {
+//            spannable.setSpan(
+//                    new ForegroundColorSpan(Color.RED),
+//                    28, // start
+//                    34, // end
+//                    Spannable.SPAN_EXCLUSIVE_INCLUSIVE
+//            );
+//            spannable.setSpan(
+//                    new ForegroundColorSpan(Color.RED),
+//                    58, // start
+//                    69, // end
+//                    Spannable.SPAN_EXCLUSIVE_INCLUSIVE
+//            );
+//        } catch (Exception e){}
+
+        //otherLocationTextView3.setText(spannable);
         otherLocationTextView3.setText(string);
     }
 
@@ -168,8 +195,8 @@ public class MainActivity extends AppCompatActivity {
             staticLocationTextView.setText("Last Known Location: <Latitude | Longitude>\n" +
                     "Degrees: <" + Location.convert(latitude, Location.FORMAT_DEGREES) + " | " + Location.convert(longitude, Location.FORMAT_DEGREES) + ">\n" +
                     "Seconds: <" + Location.convert(latitude, Location.FORMAT_SECONDS) + " | " + Location.convert(longitude, Location.FORMAT_DEGREES) + ">\n" +
-                    "Minutes: <" + Location.convert(latitude, Location.FORMAT_MINUTES) + " | " + Location.convert(longitude, Location.FORMAT_DEGREES) + ">\n" +
-                    "Raw: <" + latitude + " | " + longitude +">");
+                    "Minutes:  <" + Location.convert(latitude, Location.FORMAT_MINUTES) + " | " + Location.convert(longitude, Location.FORMAT_DEGREES) + ">\n" +
+                    "Raw:         <" + latitude + " | " + longitude +">");
         }
     }
 
